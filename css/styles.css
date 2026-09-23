@@ -881,6 +881,11 @@ li { margin-bottom: .45rem; }
   border: 1px solid rgba(47, 111, 79, .35);
   color: var(--success);
 }
+.form-status.is-info {
+  background: rgba(43, 29, 23, .06);
+  border: 1px solid rgba(43, 29, 23, .18);
+  color: var(--muted);
+}
 .form-status.is-error {
   background: rgba(163, 58, 37, .08);
   border: 1px solid rgba(163, 58, 37, .3);

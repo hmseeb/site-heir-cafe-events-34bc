@@ -8,9 +8,14 @@ bakery, mobile espresso catering, and wedding, corporate and private-party cater
 
 ## Stack
 
-Vanilla HTML, CSS and JavaScript. No build step, no dependencies, no environment
-variables and no external APIs. Open `index.html` in a browser, or serve the folder
-statically (e.g. `python3 -m http.server`).
+Vanilla HTML, CSS and JavaScript. No build step and no dependencies. Open
+`index.html` in a browser, or serve the folder statically (e.g. `python3 -m
+http.server`).
+
+The quote form posts to one serverless function, `api/ghl-lead.js`, which sends the
+lead to GoHighLevel (location `7tl0VyRfoq5B5I8dnuP8`). It needs a GoHighLevel API
+token in the deployment environment as `GHL_API_KEY` (aliases: `GHL_ACCESS_TOKEN`,
+`HIGHLEVEL_API_KEY`). Without it the form shows a call/email fallback message.
 
 ## Pages
 
@@ -35,8 +40,10 @@ assets/favicon.svg favicon placeholder (SVG coffee cup mark)
 
 - Responsive layout from 320px up, with a fixed mobile "Call Now / Get a Quote" bar
 - Click-to-call phone links in the top bar, nav, hero, every CTA band and the footer
-- Quote form with client-side validation and a honeypot field; on submit it opens the
-  visitor's mail client pre-filled and addressed to the business (no backend required)
+- Quote form with client-side validation and a honeypot field; on submit it creates or
+  updates the contact in GoHighLevel (first/last name, phone, email, the message as a
+  note, custom fields "Lead Source" = Website and "Website Form" = form name, tag
+  `website-lead`) and shows an inline thank-you message
 - Accessible markup: semantic landmarks, skip link, ARIA labels, visible focus states,
   `prefers-reduced-motion` support
 - SEO: per-page title/description/keywords, canonical, Open Graph and Twitter cards,

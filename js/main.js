@@ -98,15 +98,20 @@
   }
 
   /* ----------------------------------------------------------------------
-     Quote / contact form
-     Submits by opening a pre-filled email to the business (no backend,
-     no third-party API involved).
+     Quote / contact forms
+     Submissions are posted to /api/ghl-lead, which creates or updates the
+     contact in the GoHighLevel sub-account (tagged "website-lead"). A
+     thank-you message is shown in place of the form status on success.
      ---------------------------------------------------------------------- */
-  function initForm() {
-    var form = document.getElementById('quote-form');
+  function initForms() {
+    var forms = document.querySelectorAll('form[data-ghl-form], form#quote-form');
+    Array.prototype.forEach.call(forms, initForm);
+  }
+
+  function initForm(form) {
     if (!form) return;
 
-    var status = document.getElementById('form-status');
+    var status = form.querySelector('.form-status') || document.getElementById('form-status');
     var emailRe = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
     function fieldWrap(input) {
@@ -175,6 +180,47 @@
       status.innerHTML = html;
     }
 
+    function val(name) {
+      var el = form.elements[name];
+      return el && el.value ? el.value.trim() : '';
+    }
+
+    function mailtoFallback() {
+      var eventType = val('event_type') || 'Not specified';
+      var subject = 'Quote request from ' + val('name') + ' — ' + eventType;
+      var body = [
+        'New quote request from the HEIR Cafe & Events website',
+        '------------------------------------------------------',
+        'Name: ' + val('name'),
+        'Phone: ' + (val('phone') || 'Not provided'),
+        'Email: ' + val('email'),
+        'Event type: ' + eventType,
+        'Preferred date: ' + (val('event_date') || 'Flexible / not set'),
+        'Guest count: ' + (val('guests') || 'Not provided'),
+        'Location: ' + (val('location') || 'Not provided'),
+        '',
+        'Details:',
+        val('message'),
+        ''
+      ].join('\n');
+
+      return 'mailto:' + BUSINESS_EMAIL +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+    }
+
+    function payload() {
+      var data = {
+        form_name: form.getAttribute('data-ghl-form') || form.id || 'Website Form',
+        page_url: window.location.href
+      };
+      Array.prototype.forEach.call(form.elements, function (el) {
+        if (!el.name || el.type === 'submit' || el.type === 'button') return;
+        data[el.name] = (el.value || '').trim();
+      });
+      return data;
+    }
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -194,46 +240,63 @@
         return;
       }
 
-      function val(name) {
-        var el = form.elements[name];
-        return el && el.value ? el.value.trim() : '';
+      var firstName = val('name').split(' ')[0] || 'there';
+      var submitBtn = form.querySelector('[type="submit"]');
+      var submitLabel = submitBtn ? submitBtn.innerHTML : '';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Sending&hellip;';
+      }
+      showStatus('info', 'Sending your request&hellip;');
+
+      function restore() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = submitLabel;
+        }
       }
 
-      var name = val('name');
-      var eventType = val('event_type') || 'Not specified';
-      var subject = 'Quote request from ' + name + ' — ' + eventType;
+      function onSuccess() {
+        restore();
+        showStatus(
+          'success',
+          'Thank you, ' + firstName + '! Your request has been received. ' +
+          'We\'ll reply within one business day — or call ' +
+          '<a href="tel:+17609007350">(760) 900-7350</a> for a faster answer.'
+        );
+        form.reset();
+        inputs.forEach(function (input) { setError(input, ''); });
+      }
 
-      var body = [
-        'New quote request from the HEIR Cafe & Events website',
-        '------------------------------------------------------',
-        'Name: ' + name,
-        'Phone: ' + (val('phone') || 'Not provided'),
-        'Email: ' + val('email'),
-        'Event type: ' + eventType,
-        'Preferred date: ' + (val('event_date') || 'Flexible / not set'),
-        'Guest count: ' + (val('guests') || 'Not provided'),
-        'Location: ' + (val('location') || 'Not provided'),
-        '',
-        'Details:',
-        val('message'),
-        ''
-      ].join('\n');
+      function onFailure() {
+        restore();
+        showStatus(
+          'error',
+          'Sorry — we couldn\'t send your request just now. Please call ' +
+          '<a href="tel:+17609007350">(760) 900-7350</a> or ' +
+          '<a href="' + mailtoFallback() + '">email us the details</a> instead.'
+        );
+      }
 
-      var mailto = 'mailto:' + BUSINESS_EMAIL +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
+      if (typeof window.fetch !== 'function') {
+        onFailure();
+        return;
+      }
 
-      showStatus(
-        'success',
-        'Thanks, ' + name.split(' ')[0] + '! Your email app is opening with your request ready to send to ' +
-        '<a href="mailto:' + BUSINESS_EMAIL + '">' + BUSINESS_EMAIL + '</a>. ' +
-        'Press send and we\'ll reply within one business day — or call ' +
-        '<a href="tel:+17609007350">(760) 900-7350</a> for a faster answer.'
-      );
-
-      window.location.href = mailto;
-      form.reset();
-      inputs.forEach(function (input) { setError(input, ''); });
+      window.fetch('/api/ghl-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload())
+      }).then(function (res) {
+        if (!res.ok) throw new Error('Request failed: ' + res.status);
+        return res.json().catch(function () { return { ok: true }; });
+      }).then(function (data) {
+        if (data && data.ok === false) throw new Error(data.error || 'Request failed');
+        onSuccess();
+      }).catch(function () {
+        onFailure();
+      });
     });
   }
 
@@ -265,7 +328,7 @@
     initHeader();
     initReveal();
     initYear();
-    initForm();
+    initForms();
     initFaq();
   });
 })();
