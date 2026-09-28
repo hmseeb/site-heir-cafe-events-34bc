@@ -176,7 +176,11 @@
             <span class="req" aria-hidden="true">*</span> are required.
           </p>
 
-          <form id="quote-form" data-ghl-form="Quote Request Form" novalidate>
+          <form id="quote-form" method="POST" action="https://vision.leadrai.com/api/forms/718b86bc85f23b02a8d75b390a663ca4" data-lead-form="Quote request" novalidate>
+            <input type="hidden" name="_form" value="Quote request">
+            <input type="hidden" name="_page" data-page-field value="">
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none">
+
             <div class="form-grid">
               <div class="field">
                 <label for="name">Full name <span class="req" aria-hidden="true">*</span></label>
@@ -198,7 +202,7 @@
 
               <div class="field">
                 <label for="event_type">Event type <span class="req" aria-hidden="true">*</span></label>
-                <select id="event_type" name="event_type" data-label="event type" required>
+                <select id="event_type" name="Event type" data-label="event type" required>
                   <option value="">Choose one&hellip;</option>
                   <option>Wedding</option>
                   <option>Corporate / office catering</option>
@@ -215,32 +219,28 @@
 
               <div class="field">
                 <label for="event_date">Event date</label>
-                <input type="date" id="event_date" name="event_date" data-label="event date">
+                <input type="date" id="event_date" name="Preferred date" data-label="event date">
                 <span class="error-msg" role="alert"></span>
               </div>
 
               <div class="field">
                 <label for="guests">Guest count</label>
-                <input type="number" id="guests" name="guests" data-label="guest count" min="1" max="1000" step="1" placeholder="e.g. 75">
+                <input type="number" id="guests" name="Guest count" data-label="guest count" min="1" max="1000" step="1" placeholder="e.g. 75">
                 <span class="error-msg" role="alert"></span>
               </div>
 
               <div class="field field--full">
                 <label for="location">Event location or venue</label>
-                <input type="text" id="location" name="location" data-label="event location" placeholder="Venue name, or city if you're still deciding">
+                <input type="text" id="location" name="Event location" data-label="event location" placeholder="Venue name, or city if you're still deciding">
                 <span class="error-msg" role="alert"></span>
               </div>
 
               <div class="field field--full">
                 <label for="message">Tell us about your event <span class="req" aria-hidden="true">*</span></label>
-                <textarea id="message" name="message" data-label="event details" placeholder="Service times, the style you're going for, dietary needs, whether you want the coffee bar, dessert table, or full catering&hellip;" required></textarea>
+                <textarea id="message" name="Message" data-label="event details" placeholder="Service times, the style you're going for, dietary needs, whether you want the coffee bar, dessert table, or full catering&hellip;" required></textarea>
                 <span class="error-msg" role="alert"></span>
               </div>
 
-              <div class="field hp-field" aria-hidden="true">
-                <label for="company_website">Leave this field empty</label>
-                <input type="text" id="company_website" name="company_website" class="hp-input" tabindex="-1" autocomplete="off">
-              </div>
             </div>
 
             <button class="btn btn--primary btn--lg btn--block" type="submit" style="margin-top:22px">

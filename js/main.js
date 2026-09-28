@@ -5,8 +5,6 @@
 (function () {
   'use strict';
 
-  var BUSINESS_EMAIL = 'point4aj@gmail.com';
-
   /* ----------------------------------------------------------------------
      Mobile navigation
      ---------------------------------------------------------------------- */
@@ -99,12 +97,18 @@
 
   /* ----------------------------------------------------------------------
      Quote / contact forms
-     Submissions are posted to /api/ghl-lead, which creates or updates the
-     contact in the GoHighLevel sub-account (tagged "website-lead"). A
-     thank-you message is shown in place of the form status on success.
+     Submissions are posted to the LeadrVision forms endpoint (the same URL
+     as the form's action attribute, so the form still works without JS).
+     A thank-you message is shown in place of the form status on success,
+     and also when the visitor returns with ?submitted=1 in the URL.
      ---------------------------------------------------------------------- */
+  var FORM_ENDPOINT = 'https://vision.leadrai.com/api/forms/718b86bc85f23b02a8d75b390a663ca4';
+  var SENT_MESSAGE =
+    'Thanks, your message was sent. We\'ll reply within one business day &mdash; or call ' +
+    '<a href="tel:+17609007350">(760) 900-7350</a> for a faster answer.';
+
   function initForms() {
-    var forms = document.querySelectorAll('form[data-ghl-form], form#quote-form');
+    var forms = document.querySelectorAll('form[data-lead-form]');
     Array.prototype.forEach.call(forms, initForm);
   }
 
@@ -112,6 +116,16 @@
     if (!form) return;
 
     var status = form.querySelector('.form-status') || document.getElementById('form-status');
+
+    // Record the current page so visitors return here after a plain submit.
+    var pageField = form.querySelector('[data-page-field]');
+    if (pageField) pageField.value = window.location.href;
+
+    // Returning from a no-JavaScript submission.
+    if (/[?&]submitted=1(&|$)/.test(window.location.search) && status) {
+      status.className = 'form-status is-visible is-success';
+      status.innerHTML = SENT_MESSAGE;
+    }
     var emailRe = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
     function fieldWrap(input) {
@@ -153,7 +167,7 @@
         setError(input, 'Please enter a 10-digit phone number.');
         return false;
       }
-      if (input.name === 'message' && value && value.length < 10) {
+      if (input.name === 'Message' && value && value.length < 10) {
         setError(input, 'Please add a little more detail (10+ characters).');
         return false;
       }
@@ -162,7 +176,7 @@
     }
 
     var inputs = Array.prototype.slice.call(
-      form.querySelectorAll('input:not([type="hidden"]):not(.hp-input), select, textarea')
+      form.querySelectorAll('input:not([type="hidden"]):not([name="_gotcha"]), select, textarea')
     );
 
     inputs.forEach(function (input) {
@@ -180,44 +194,14 @@
       status.innerHTML = html;
     }
 
-    function val(name) {
-      var el = form.elements[name];
-      return el && el.value ? el.value.trim() : '';
-    }
-
-    function mailtoFallback() {
-      var eventType = val('event_type') || 'Not specified';
-      var subject = 'Quote request from ' + val('name') + ' — ' + eventType;
-      var body = [
-        'New quote request from the HEIR Cafe & Events website',
-        '------------------------------------------------------',
-        'Name: ' + val('name'),
-        'Phone: ' + (val('phone') || 'Not provided'),
-        'Email: ' + val('email'),
-        'Event type: ' + eventType,
-        'Preferred date: ' + (val('event_date') || 'Flexible / not set'),
-        'Guest count: ' + (val('guests') || 'Not provided'),
-        'Location: ' + (val('location') || 'Not provided'),
-        '',
-        'Details:',
-        val('message'),
-        ''
-      ].join('\n');
-
-      return 'mailto:' + BUSINESS_EMAIL +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
-    }
-
     function payload() {
-      var data = {
-        form_name: form.getAttribute('data-ghl-form') || form.id || 'Website Form',
-        page_url: window.location.href
-      };
+      var data = {};
       Array.prototype.forEach.call(form.elements, function (el) {
         if (!el.name || el.type === 'submit' || el.type === 'button') return;
         data[el.name] = (el.value || '').trim();
       });
+      data._form = data._form || form.getAttribute('data-lead-form') || 'Website Form';
+      data._page = window.location.href;
       return data;
     }
 
@@ -225,8 +209,10 @@
       e.preventDefault();
 
       // Honeypot: silently ignore bot submissions.
-      var hp = form.querySelector('.hp-input');
+      var hp = form.querySelector('[name="_gotcha"]');
       if (hp && hp.value) return;
+
+      if (pageField) pageField.value = window.location.href;
 
       var firstInvalid = null;
       inputs.forEach(function (input) {
@@ -240,7 +226,6 @@
         return;
       }
 
-      var firstName = val('name').split(' ')[0] || 'there';
       var submitBtn = form.querySelector('[type="submit"]');
       var submitLabel = submitBtn ? submitBtn.innerHTML : '';
 
@@ -259,13 +244,9 @@
 
       function onSuccess() {
         restore();
-        showStatus(
-          'success',
-          'Thank you, ' + firstName + '! Your request has been received. ' +
-          'We\'ll reply within one business day — or call ' +
-          '<a href="tel:+17609007350">(760) 900-7350</a> for a faster answer.'
-        );
+        showStatus('success', SENT_MESSAGE);
         form.reset();
+        if (pageField) pageField.value = window.location.href;
         inputs.forEach(function (input) { setError(input, ''); });
       }
 
@@ -273,18 +254,18 @@
         restore();
         showStatus(
           'error',
-          'Sorry — we couldn\'t send your request just now. Please call ' +
-          '<a href="tel:+17609007350">(760) 900-7350</a> or ' +
-          '<a href="' + mailtoFallback() + '">email us the details</a> instead.'
+          'Sorry — we couldn\'t send your request just now. Please try again, or call ' +
+          '<a href="tel:+17609007350">(760) 900-7350</a> instead.'
         );
       }
 
+      // No fetch support: fall back to a plain HTML POST to the same endpoint.
       if (typeof window.fetch !== 'function') {
-        onFailure();
+        form.submit();
         return;
       }
 
-      window.fetch('/api/ghl-lead', {
+      window.fetch(FORM_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload())
