@@ -12,10 +12,11 @@ Vanilla HTML, CSS and JavaScript. No build step and no dependencies. Open
 `index.html` in a browser, or serve the folder statically (e.g. `python3 -m
 http.server`).
 
-The quote form posts to one serverless function, `api/ghl-lead.js`, which sends the
-lead to GoHighLevel (location `7tl0VyRfoq5B5I8dnuP8`). It needs a GoHighLevel API
-token in the deployment environment as `GHL_API_KEY` (aliases: `GHL_ACCESS_TOKEN`,
-`HIGHLEVEL_API_KEY`). Without it the form shows a call/email fallback message.
+The quote form posts directly to the LeadrVision forms endpoint
+(`https://vision.leadrai.com/api/forms/718b86bc85f23b02a8d75b390a663ca4`). There is no
+serverless function and no environment variable to configure. The same URL is used by
+the form's `action` attribute and by the `fetch()` submission, so the form still works
+with JavaScript disabled.
 
 ## Pages
 
@@ -40,10 +41,10 @@ assets/favicon.svg favicon placeholder (SVG coffee cup mark)
 
 - Responsive layout from 320px up, with a fixed mobile "Call Now / Get a Quote" bar
 - Click-to-call phone links in the top bar, nav, hero, every CTA band and the footer
-- Quote form with client-side validation and a honeypot field; on submit it creates or
-  updates the contact in GoHighLevel (first/last name, phone, email, the message as a
-  note, custom fields "Lead Source" = Website and "Website Form" = form name, tag
-  `website-lead`) and shows an inline thank-you message
+- Quote form with client-side validation and a hidden `_gotcha` honeypot field; on submit
+  it POSTs the named fields (plus `_form` and `_page`) to the LeadrVision forms endpoint
+  and shows an inline thank-you message. A plain, no-JavaScript submission returns to the
+  page with `?submitted=1`, which shows the same confirmation
 - Accessible markup: semantic landmarks, skip link, ARIA labels, visible focus states,
   `prefers-reduced-motion` support
 - SEO: per-page title/description/keywords, canonical, Open Graph and Twitter cards,
