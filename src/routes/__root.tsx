@@ -170,7 +170,8 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
-      </body>
+      <p data-lv-review="1" style={{ textAlign: "center", margin: "24px 0" }}><a href="/review">Leave us a review</a></p>
+</body>
     </html>
   );
 }
