@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://site-heir-cafe-events-34bc.vercel.app/sitemap.xml
