@@ -168,6 +168,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <script defer data-lv-track src="https://vision.leadrai.com/api/forms/718b86bc85f23b02a8d75b390a663ca4/t.js"></script>
+        <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "0a932598fc5b4cc9baf156d875620bd1"}'></script>
         {children}
         <Scripts />
       <p data-lv-review="1" style={{ textAlign: "center", margin: "24px 0" }}><a href="/review">Leave us a review</a></p>
